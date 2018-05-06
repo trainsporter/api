@@ -43,7 +43,7 @@ namespace transporter_api
             #region AcceptWebSocket
             app.Use(async (context, next) =>
             {
-                if (context.Request.Path == "/position")
+                if (context.Request.Path == "/mobile")
                 {
                     if (context.WebSockets.IsWebSocketRequest)
                     {
