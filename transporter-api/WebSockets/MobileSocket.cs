@@ -68,7 +68,10 @@ namespace transporter_api.WebSockets
                 CancellationToken.None);
             while (!result.CloseStatus.HasValue)
             {
-                
+                await SendAsync(webSocket, "hey");
+                //await webSocket.SendAsync(new ArraySegment<byte>(buffer, 0, result.Count),
+                //    result.MessageType, result.EndOfMessage, CancellationToken.None);
+
                 result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer),
                     CancellationToken.None);
             }
