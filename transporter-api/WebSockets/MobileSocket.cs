@@ -72,11 +72,12 @@ namespace transporter_api.WebSockets
                 var mobileSocketMessage = JsonConvert.DeserializeObject<MobileSocketMessage>(message);
                 if (mobileSocketMessage.Operation == Operation.Position)
                 {
-                    var position = JsonConvert
-                        .DeserializeObject<Position>(mobileSocketMessage.Payload);
+                    //var position = JsonConvert
+                    //    .DeserializeObject<Position>(mobileSocketMessage.Payload);
+                    await SendAsync(webSocket, $"hey, {mobileSocketMessage.Operation}");
 
-                    await SendAsync(webSocket,
-                        $"Hi!. I get it, your position: {position.Latitude}, {position.Longitude}");
+                    //await SendAsync(webSocket,
+                    //    $"Hi!. I get it, your position: {position.Latitude}, {position.Longitude}");
                 }
                 else
                 {
