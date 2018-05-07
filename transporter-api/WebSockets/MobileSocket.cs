@@ -31,7 +31,7 @@ namespace transporter_api.WebSockets
             public long Longitude { get; set; }
         }
 
-        public static async Task Mobile(HttpContext context, WebSocket webSocket)
+        public static async Task Connect(HttpContext context, WebSocket webSocket)
         {
             var buffer = new byte[1024 * 4];
             WebSocketReceiveResult result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer),
