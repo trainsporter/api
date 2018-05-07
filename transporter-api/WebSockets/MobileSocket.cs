@@ -17,7 +17,7 @@ namespace transporter_api.WebSockets
         public class MobileSocketMessage
         {
             public string Operation { get; set; }
-            public string Payload { get; set; } 
+            public object Payload { get; set; } 
         }
 
         public static class Operation
@@ -42,42 +42,11 @@ namespace transporter_api.WebSockets
                 var mobileSocketMessage = JsonConvert.DeserializeObject<MobileSocketMessage>(message);
                 if (mobileSocketMessage.Operation == Operation.Position)
                 {
-                    var position = JsonConvert
-                        .DeserializeObject<Position>(mobileSocketMessage.Payload);
+                    var position = (Position)Convert.ChangeType(mobileSocketMessage.Payload, 
+                        typeof(Position));
 
                     await SendAsync(webSocket,
-                        $"Hi!. I get it, your position: {position.Latitude}, {position.Longitude}");
-                }
-                else
-                {
-                    await SendAsync(webSocket,
-                        $"Dude, I don't know '{mobileSocketMessage.Operation}' operation.");
-                }
-
-                result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer),
-                    CancellationToken.None);
-            }
-            await webSocket.CloseAsync(result.CloseStatus.Value, result.CloseStatusDescription,
-                CancellationToken.None);
-        }
-
-        public static async Task Echo(HttpContext context, WebSocket webSocket)
-        {
-            var buffer = new byte[1024 * 4];
-            WebSocketReceiveResult result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer),
-                CancellationToken.None);
-            while (!result.CloseStatus.HasValue)
-            {
-                var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                var mobileSocketMessage = JsonConvert.DeserializeObject<MobileSocketMessage>(message);
-                if (mobileSocketMessage.Operation == Operation.Position)
-                {
-                    //var position = JsonConvert
-                    //    .DeserializeObject<Position>(mobileSocketMessage.Payload);
-                    await SendAsync(webSocket, $"hey, {mobileSocketMessage.Operation}");
-
-                    //await SendAsync(webSocket,
-                    //    $"Hi!. I get it, your position: {position.Latitude}, {position.Longitude}");
+                        $"Hi! Got it, your position: {position.Latitude}, {position.Longitude}");
                 }
                 else
                 {

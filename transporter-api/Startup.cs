@@ -49,7 +49,7 @@ namespace transporter_api
                     if (context.WebSockets.IsWebSocketRequest)
                     {
                         WebSocket webSocket = await context.WebSockets.AcceptWebSocketAsync();
-                        await MobileSocket.Echo(context, webSocket);
+                        await MobileSocket.Connect(context, webSocket);
                     }
                     else
                     {
