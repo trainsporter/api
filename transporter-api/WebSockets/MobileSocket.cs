@@ -17,7 +17,7 @@ namespace transporter_api.WebSockets
         public class MobileSocketMessage
         {
             public string Operation { get; set; }
-            public string Payload { get; set; } 
+            public dynamic Payload { get; set; } 
         }
 
         public static class Operation
@@ -42,12 +42,12 @@ namespace transporter_api.WebSockets
                 var mobileSocketMessage = JsonConvert.DeserializeObject<MobileSocketMessage>(message);
                 if (mobileSocketMessage.Operation == Operation.Position)
                 {
-                    //var position = (Position)Convert.ChangeType(mobileSocketMessage.Payload, 
-                    //    typeof(Position));
+                    var position = (Position)Convert.ChangeType(mobileSocketMessage.Payload,
+                        typeof(Position));
 
-                    //await SendAsync(webSocket,
-                    //    $"Hi! Got it, your position: {position.Latitude}, {position.Longitude}");
-                    await SendAsync(webSocket, $"payload: {mobileSocketMessage.Payload}");
+                    await SendAsync(webSocket,
+                        $"Hi! Got it, your position: {position.Latitude}, {position.Longitude}");
+                    //await SendAsync(webSocket, $"payload: {mobileSocketMessage.Payload}");
                 }
                 else
                 {
