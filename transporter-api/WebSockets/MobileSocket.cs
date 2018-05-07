@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,7 +18,7 @@ namespace transporter_api.WebSockets
         public class MobileSocketMessage
         {
             public string Operation { get; set; }
-            public dynamic Payload { get; set; } 
+            public object Payload { get; set; } 
         }
 
         public static class Operation
@@ -39,22 +40,11 @@ namespace transporter_api.WebSockets
             while (!result.CloseStatus.HasValue)
             {
                 var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                var mobileSocketMessage = JsonConvert.DeserializeObject<MobileSocketMessage>(message);
-                if (mobileSocketMessage.Operation == Operation.Position)
-                {
-                    var position = (Position)Convert.ChangeType(mobileSocketMessage.Payload,
-                        typeof(Position));
 
-                    await SendAsync(webSocket,
-                        $"Hi! Got it, your position: {position.Latitude}, {position.Longitude}");
-                    //await SendAsync(webSocket, $"payload: {mobileSocketMessage.Payload}");
-                }
-                else
-                {
-                    await SendAsync(webSocket,
-                        $"Dude, I don't know '{mobileSocketMessage.Operation}' operation.");
-                }
-                //await SendAsync(webSocket, $"hey, {mobileSocketMessage.Operation}");
+                string answerMessage = ParseMobileSocketMessage(message);
+
+                if (message != null)
+                    await SendAsync(webSocket, answerMessage);
                 //await webSocket.SendAsync(new ArraySegment<byte>(buffer, 0, result.Count),
                 //    result.MessageType, result.EndOfMessage, CancellationToken.None);
 
@@ -63,6 +53,32 @@ namespace transporter_api.WebSockets
             }
             await webSocket.CloseAsync(result.CloseStatus.Value, result.CloseStatusDescription,
                 CancellationToken.None);
+        }
+
+        public static string ParseMobileSocketMessage(string message)
+        {
+            var mobileSocketMessage = JsonConvert.DeserializeObject<MobileSocketMessage>(message);
+
+            JToken token = JObject.Parse(message);
+
+            var operationType = (string)token.SelectToken("operation");
+
+            if (operationType == Operation.Position)
+            {
+                var position = token.SelectToken("payload").ToObject<Position>();
+                //JsonConvert.DeserializeObject<Position>(mobileSocketMessage.Payload);
+                //var position = (Position)Convert.ChangeType(mobileSocketMessage.Payload,
+                //    typeof(Position));
+
+
+                return
+                    $"Hi! Got it, your position: {position.Latitude}, {position.Longitude}";
+                //await SendAsync(webSocket, $"payload: {mobileSocketMessage.Payload}");
+            }
+            else
+            {
+                return "=(";
+            }
         }
 
         public static async Task SendAsync(WebSocket webSocket, string message)
