@@ -28,8 +28,8 @@ namespace transporter_api.WebSockets
 
         public class Position
         {
-            public long Latitude { get; set; }
-            public long Longitude { get; set; }
+            public decimal Latitude { get; set; }
+            public decimal Longitude { get; set; }
         }
 
         public static async Task Connect(HttpContext context, WebSocket webSocket)
