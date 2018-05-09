@@ -69,15 +69,15 @@ namespace transporter_api.WebSockets
                     if (int.TryParse(driverIdString.ToString(), out int driverId))
                     {
                         WebSocket webSocket = await context.WebSockets.AcceptWebSocketAsync();
-                        if (MobileSocket.MobileWebSockets.TryAdd(driverId, webSocket))
-                        {
+                        //if (MobileSocket.MobileWebSockets.TryAdd(driverId, webSocket))
+                        //{
                             await MobileSocket.Connect(context, webSocket, driverId);
                             return true;
-                        }
-                        else
-                        {
-                            return false;
-                        }
+                        //}
+                        //else
+                        //{
+                        //    return false;
+                        //}
                     }
                     else
                     {
