@@ -69,16 +69,12 @@ namespace transporter_api.WebSockets
                 {
                     if (int.TryParse(driverIdString.ToString(), out int driverId))
                     {
-                        WebSocket webSocket = await context.WebSockets.AcceptWebSocketAsync();
-                        if (MobileSocket.MobileWebSockets.TryAdd(driverId, webSocket))
-                        {
-                            await MobileSocket.Connect(context, webSocket, driverId);
-                            return true;
-                        }
-                        else
-                        {
-                            return false;
-                        }
+                        WebSocket webSocket = 
+                            await context.WebSockets.AcceptWebSocketAsync();
+
+                        MobileWebSockets.TryAdd(driverId, webSocket);
+                        await Connect(context, webSocket, driverId);
+                        return true;
                     }
                 }
             }
@@ -99,7 +95,8 @@ namespace transporter_api.WebSockets
                 string answerMessage = ParseMobileSocketMessage(message);
 
                 if (message != null)
-                    await SendAsync(webSocket, answerMessage + $" --driverId: {driverId}");
+                    await SendAsync(webSocket, answerMessage + $" --driverId: {driverId}, " +
+                        $"sockets count: {MobileWebSockets.Count}");
 
                 result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer),
                     CancellationToken.None);
@@ -153,7 +150,13 @@ namespace transporter_api.WebSockets
             {
                 Thread.Sleep(1000);
 
-                //Orders.
+                //if (Orders.Count != 0)
+                //{
+                    foreach (var mobileWs in MobileWebSockets)
+                    {
+                        await SendAsync(mobileWs.Value, $"your id: {mobileWs.Key}");
+                    }
+                //}
             }
         }
     }
