@@ -44,6 +44,7 @@ namespace transporter_api.WebSockets
             = new Dictionary<int, WebSocket>();
 
         public static bool SendIsRunned = false;
+        public static bool WsActive = false;
 
         public class MobileSocketMessage
         {
@@ -77,7 +78,9 @@ namespace transporter_api.WebSockets
                         MobileWebSockets.TryAdd(driverId, webSocket);
                         if (!SendIsRunned)
                         {
+                            WsActive = true;
                             StartSendOrders();
+                            SendIsRunned = true;
                         }
 
                         await Connect(context, webSocket, driverId);
@@ -110,6 +113,7 @@ namespace transporter_api.WebSockets
             }
             await webSocket.CloseAsync(result.CloseStatus.Value, result.CloseStatusDescription,
                 CancellationToken.None);
+            WsActive = false;
         }
 
         public static string ParseMobileSocketMessage(string message)
@@ -153,7 +157,7 @@ namespace transporter_api.WebSockets
 
         public static async Task StartSendOrders()
         {
-            while (true)
+            while (true && WsActive)
             {
                 //if (Orders.Count != 0)
                 //{
