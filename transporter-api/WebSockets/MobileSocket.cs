@@ -43,6 +43,8 @@ namespace transporter_api.WebSockets
         public static Dictionary<int, WebSocket> MobileWebSockets
             = new Dictionary<int, WebSocket>();
 
+        public static bool SendIsRunned = false;
+
         public class MobileSocketMessage
         {
             public string Operation { get; set; }
@@ -73,6 +75,11 @@ namespace transporter_api.WebSockets
                             await context.WebSockets.AcceptWebSocketAsync();
 
                         MobileWebSockets.TryAdd(driverId, webSocket);
+                        if (!SendIsRunned)
+                        {
+                            StartSendOrders();
+                        }
+
                         await Connect(context, webSocket, driverId);
                         return true;
                     }
@@ -148,8 +155,6 @@ namespace transporter_api.WebSockets
         {
             while (true)
             {
-                Thread.Sleep(1000);
-
                 //if (Orders.Count != 0)
                 //{
                     foreach (var mobileWs in MobileWebSockets)
@@ -157,6 +162,7 @@ namespace transporter_api.WebSockets
                         await SendAsync(mobileWs.Value, $"your id: {mobileWs.Key}");
                     }
                 //}
+                Thread.Sleep(1000);
             }
         }
     }
