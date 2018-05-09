@@ -71,31 +71,20 @@ namespace transporter_api.WebSockets
                         WebSocket webSocket = await context.WebSockets.AcceptWebSocketAsync();
                         //if (MobileSocket.MobileWebSockets.TryAdd(driverId, webSocket))
                         //{
-                            await MobileSocket.Connect(context, webSocket, driverId);
-                            return true;
+                        await MobileSocket.Connect(context, webSocket, driverId);
+                        return true;
                         //}
                         //else
                         //{
                         //    return false;
                         //}
                     }
-                    else
-                    {
-                        //var s = "driver_id is invalid";
-                        //byte[] data = Encoding.UTF8.GetBytes(s);
-                        //await context.Response.Body.WriteAsync(data, 0, data.Length);
-                        return false;
-                    }
-                }
-                else
-                {
-                    return false;
                 }
             }
-            else
-            {
-                return false;
-            }
+            //var s = "driver_id is invalid";
+            //byte[] data = Encoding.UTF8.GetBytes(s);
+            //await context.Response.Body.WriteAsync(data, 0, data.Length);
+            return false;
         }
 
         public static async Task Connect(HttpContext context, WebSocket webSocket, int driverId)
