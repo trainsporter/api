@@ -23,7 +23,7 @@ namespace transporter_api
         {
             Configuration = configuration;
 
-            MobileSocket.StartSendOrders();
+            //MobileSocket.StartSendOrders();
         }
 
         public IConfiguration Configuration { get; }
