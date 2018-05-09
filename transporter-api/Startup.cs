@@ -52,11 +52,19 @@ namespace transporter_api
                     if (context.WebSockets.IsWebSocketRequest)
                     {
                         var queryDict = QueryHelpers.ParseQuery(context.Request.QueryString.ToString());
-                        if (queryDict.TryGetValue("driver_id", out var driverId))
+                        if (queryDict.TryGetValue("driver_id", out var driverIdString))
                         {
                             WebSocket webSocket = await context.WebSockets.AcceptWebSocketAsync();
-                            await MobileSocket.Connect(context, webSocket, 
-                                int.Parse(driverId.ToString()));
+
+                            if (int.TryParse(driverIdString.ToString(), out int driverId))
+                            {
+                                //if (MobileSocket.MobileWebSockets.TryAdd()
+                                await MobileSocket.Connect(context, webSocket, driverId);
+                            }
+                            else
+                            {
+                                context.Response.StatusCode = 400;
+                            }
                         }
                         else
                         {

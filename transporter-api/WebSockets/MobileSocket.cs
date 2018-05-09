@@ -58,6 +58,12 @@ namespace transporter_api.WebSockets
             public decimal Longitude { get; set; }
         }
 
+        public static async Task TryConnect(HttpContext context)
+        {
+
+        }
+
+
         public static async Task Connect(HttpContext context, WebSocket webSocket, int driverId)
         {
             var buffer = new byte[1024 * 4];
