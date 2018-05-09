@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.WebUtilities;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -60,9 +61,41 @@ namespace transporter_api.WebSockets
 
         public static async Task TryConnect(HttpContext context)
         {
-
+            if (context.WebSockets.IsWebSocketRequest)
+            {
+                var queryDict = QueryHelpers.ParseQuery(context.Request.QueryString.ToString());
+                if (queryDict.TryGetValue("driver_id", out var driverIdString))
+                {
+                    if (int.TryParse(driverIdString.ToString(), out int driverId))
+                    {
+                        WebSocket webSocket = await context.WebSockets.AcceptWebSocketAsync();
+                        if (MobileSocket.MobileWebSockets.TryAdd(driverId, webSocket))
+                        {
+                            await MobileSocket.Connect(context, webSocket, driverId);
+                        }
+                        else
+                        {
+                            context.Response.StatusCode = 400;
+                        }
+                    }
+                    else
+                    {
+                        //var s = "driver_id is invalid";
+                        //byte[] data = Encoding.UTF8.GetBytes(s);
+                        //await context.Response.Body.WriteAsync(data, 0, data.Length);
+                        context.Response.StatusCode = 400;
+                    }
+                }
+                else
+                {
+                    context.Response.StatusCode = 400;
+                }
+            }
+            else
+            {
+                context.Response.StatusCode = 400;
+            }
         }
-
 
         public static async Task Connect(HttpContext context, WebSocket webSocket, int driverId)
         {

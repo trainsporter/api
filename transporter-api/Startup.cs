@@ -50,35 +50,7 @@ namespace transporter_api
             {
                 if (context.Request.Path == "/mobile")
                 {
-                    if (context.WebSockets.IsWebSocketRequest)
-                    {
-                        var queryDict = QueryHelpers.ParseQuery(context.Request.QueryString.ToString());
-                        if (queryDict.TryGetValue("driver_id", out var driverIdString))
-                        {
-                            if (int.TryParse(driverIdString.ToString(), out int driverId))
-                            {
-                                WebSocket webSocket = await context.WebSockets.AcceptWebSocketAsync();
-
-                                //if (MobileSocket.MobileWebSockets.TryAdd()
-                                await MobileSocket.Connect(context, webSocket, driverId);
-                            }
-                            else
-                            {
-                                var s = "driver_id is invalid";
-                                byte[] data = Encoding.UTF8.GetBytes(s);
-                                await context.Response.Body.WriteAsync(data, 0, data.Length);
-                                context.Response.StatusCode = 400;
-                            }
-                        }
-                        else
-                        {
-                            context.Response.StatusCode = 400;
-                        }
-                    }
-                    else
-                    {
-                        context.Response.StatusCode = 400;
-                    }
+                    await MobileSocket.TryConnect(context);
                 }
                 else
                 {
