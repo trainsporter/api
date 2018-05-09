@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.WebSockets;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
@@ -63,6 +64,9 @@ namespace transporter_api
                             }
                             else
                             {
+                                var s = "driver_id is invalid";
+                                byte[] data = Encoding.UTF8.GetBytes(s);
+                                await context.Response.Body.WriteAsync(data, 0, data.Length);
                                 context.Response.StatusCode = 400;
                             }
                         }
