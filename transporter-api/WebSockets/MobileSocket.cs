@@ -40,7 +40,8 @@ namespace transporter_api.WebSockets
     {
         public static List<Order> Orders;
         public static Dictionary<int, int> Drivers;
-        public static Dictionary<int, WebSocket> MobileWebSockets;
+        public static Dictionary<int, WebSocket> MobileWebSockets
+            = new Dictionary<int, WebSocket>();
 
         public class MobileSocketMessage
         {
@@ -69,15 +70,15 @@ namespace transporter_api.WebSockets
                     if (int.TryParse(driverIdString.ToString(), out int driverId))
                     {
                         WebSocket webSocket = await context.WebSockets.AcceptWebSocketAsync();
-                        //if (MobileSocket.MobileWebSockets.TryAdd(driverId, webSocket))
-                        //{
-                        await MobileSocket.Connect(context, webSocket, driverId);
-                        return true;
-                        //}
-                        //else
-                        //{
-                        //    return false;
-                        //}
+                        if (MobileSocket.MobileWebSockets.TryAdd(driverId, webSocket))
+                        {
+                            await MobileSocket.Connect(context, webSocket, driverId);
+                            return true;
+                        }
+                        else
+                        {
+                            return false;
+                        }
                     }
                 }
             }
