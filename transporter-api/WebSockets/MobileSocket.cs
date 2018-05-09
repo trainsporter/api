@@ -59,7 +59,7 @@ namespace transporter_api.WebSockets
             public decimal Longitude { get; set; }
         }
 
-        public static async Task TryConnect(HttpContext context)
+        public static async Task<bool> TryConnect(HttpContext context)
         {
             if (context.WebSockets.IsWebSocketRequest)
             {
@@ -72,10 +72,11 @@ namespace transporter_api.WebSockets
                         if (MobileSocket.MobileWebSockets.TryAdd(driverId, webSocket))
                         {
                             await MobileSocket.Connect(context, webSocket, driverId);
+                            return true;
                         }
                         else
                         {
-                            context.Response.StatusCode = 400;
+                            return false;
                         }
                     }
                     else
@@ -83,17 +84,17 @@ namespace transporter_api.WebSockets
                         //var s = "driver_id is invalid";
                         //byte[] data = Encoding.UTF8.GetBytes(s);
                         //await context.Response.Body.WriteAsync(data, 0, data.Length);
-                        context.Response.StatusCode = 400;
+                        return false;
                     }
                 }
                 else
                 {
-                    context.Response.StatusCode = 400;
+                    return false;
                 }
             }
             else
             {
-                context.Response.StatusCode = 400;
+                return false;
             }
         }
 

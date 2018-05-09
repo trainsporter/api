@@ -50,7 +50,8 @@ namespace transporter_api
             {
                 if (context.Request.Path == "/mobile")
                 {
-                    await MobileSocket.TryConnect(context);
+                    if (!await MobileSocket.TryConnect(context))
+                        context.Response.StatusCode = 400;
                 }
                 else
                 {
