@@ -79,7 +79,7 @@ namespace transporter_api.WebSockets
                         if (!SendIsRunned)
                         {
                             WsActive = true;
-                            StartSendOrders();
+                            Task.Run(StartSendOrders);
                             SendIsRunned = true;
                         }
 
