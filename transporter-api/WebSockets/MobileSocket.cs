@@ -11,9 +11,35 @@ using System.Threading.Tasks;
 
 namespace transporter_api.WebSockets
 {
+    public class GeoPoint
+    {
+        public decimal Latitude { get; set; }
+        public decimal Longitude { get; set; }
+    }
+
+    public class Order
+    {
+        public string Id { get; set; }
+        public GeoPoint Pickup { get; set; }
+        public GeoPoint Dropoff { get; set; }
+        public string Status { get; set; }
+    }
+
+    public class OrderStatus
+    {
+        public const string Unnassigned = "unnassigned";
+        public const string Assigned = "assigned";
+        public const string Serving = "serving";
+        public const string Done = "done";
+        public const string Cancelled = "cancelled";
+    }
+
+
     public static class MobileSocket
     {
+        public static List<Order> Orders;
         public static Dictionary<int, int> Drivers;
+        public static Dictionary<int, WebSocket> MobileWebSockets;
 
         public class MobileSocketMessage
         {
@@ -32,7 +58,7 @@ namespace transporter_api.WebSockets
             public decimal Longitude { get; set; }
         }
 
-        public static async Task Connect(HttpContext context, WebSocket webSocket)
+        public static async Task Connect(HttpContext context, WebSocket webSocket, int driverId)
         {
             var buffer = new byte[1024 * 4];
             WebSocketReceiveResult result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer),
@@ -40,13 +66,10 @@ namespace transporter_api.WebSockets
             while (!result.CloseStatus.HasValue)
             {
                 var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
-
                 string answerMessage = ParseMobileSocketMessage(message);
 
                 if (message != null)
-                    await SendAsync(webSocket, answerMessage);
-                //await webSocket.SendAsync(new ArraySegment<byte>(buffer, 0, result.Count),
-                //    result.MessageType, result.EndOfMessage, CancellationToken.None);
+                    await SendAsync(webSocket, answerMessage + " --driverId: {driverId}");
 
                 result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer),
                     CancellationToken.None);
@@ -92,6 +115,16 @@ namespace transporter_api.WebSockets
 
             await webSocket.SendAsync(sendBuffer,
                 WebSocketMessageType.Text, true, CancellationToken.None);
+        }
+
+        public static async Task StartSendOrders()
+        {
+            while (true)
+            {
+                Thread.Sleep(1000);
+
+                //Orders.
+            }
         }
     }
 }

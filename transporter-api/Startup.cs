@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -20,6 +21,8 @@ namespace transporter_api
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
+
+            //MobileSocket.StartSendOrders();
         }
 
         public IConfiguration Configuration { get; }
@@ -48,8 +51,17 @@ namespace transporter_api
                 {
                     if (context.WebSockets.IsWebSocketRequest)
                     {
-                        WebSocket webSocket = await context.WebSockets.AcceptWebSocketAsync();
-                        await MobileSocket.Connect(context, webSocket);
+                        var queryDict = QueryHelpers.ParseQuery(context.Request.QueryString.ToString());
+                        if (queryDict.TryGetValue("driver_id", out var driverId))
+                        {
+                            WebSocket webSocket = await context.WebSockets.AcceptWebSocketAsync();
+                            await MobileSocket.Connect(context, webSocket, 
+                                int.Parse(driverId.ToString()));
+                        }
+                        else
+                        {
+                            context.Response.StatusCode = 400;
+                        }
                     }
                     else
                     {
