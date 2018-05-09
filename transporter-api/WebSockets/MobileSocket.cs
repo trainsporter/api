@@ -69,7 +69,7 @@ namespace transporter_api.WebSockets
                 string answerMessage = ParseMobileSocketMessage(message);
 
                 if (message != null)
-                    await SendAsync(webSocket, answerMessage + " --driverId: {driverId}");
+                    await SendAsync(webSocket, answerMessage + $" --driverId: {driverId}");
 
                 result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer),
                     CancellationToken.None);
