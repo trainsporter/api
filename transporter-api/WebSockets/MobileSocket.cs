@@ -11,6 +11,7 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using transporter_api.Extensions;
 
 namespace transporter_api.WebSockets
 {
@@ -121,13 +122,13 @@ namespace transporter_api.WebSockets
                 if (TryParseMobilePosition(message, out GeoPoint position))
                 {
                     Drivers.AddOrUpdate(driverId, position, (key, oldPosition) => position);
-                    await SendAsync(webSocket, $"position saved, --driverId: {driverId}, " +
+                    await webSocket.SendAsync($"position saved, --driverId: {driverId}, " +
                         $"opened mobile sockets: {MobileWebSockets.Count}, " +
                         $"drivers positions count: {Drivers.Count}");
                 }
                 else
                 {
-                    await SendAsync(webSocket, $"ERROR position not saved --driverId: {driverId}, " +
+                    await webSocket.SendAsync($"ERROR position not saved --driverId: {driverId}, " +
                         $"opened mobile sockets: {MobileWebSockets.Count}" +
                         $"drivers positions count: {Drivers.Count}");
                 }
@@ -155,18 +156,6 @@ namespace transporter_api.WebSockets
             return position != null;
         }
 
-        public static async Task SendAsync(WebSocket webSocket, string message)
-        {
-            var arr = Encoding.UTF8.GetBytes(message);
-
-            var sendBuffer = new ArraySegment<byte>(
-                    array: arr,
-                    offset: 0,
-                    count: arr.Length);
-
-            await webSocket.SendAsync(sendBuffer,
-                WebSocketMessageType.Text, true, CancellationToken.None);
-        }
 
         public static async Task StartSendOrders()
         {
@@ -196,7 +185,7 @@ namespace transporter_api.WebSockets
         {
             foreach (var mobileWs in MobileWebSockets)
             {
-                await SendAsync(mobileWs.Value, JsonConvert.SerializeObject(obj,
+                await mobileWs.Value.SendAsync(JsonConvert.SerializeObject(obj,
                         new JsonSerializerSettings
                         {
                             ContractResolver = new CamelCasePropertyNamesContractResolver()
@@ -211,7 +200,7 @@ namespace transporter_api.WebSockets
             {
                 try
                 {
-                    await SendAsync(mobileWs.Value, message);
+                    await mobileWs.Value.SendAsync(message);
                 }
                 catch (Exception)
                 {

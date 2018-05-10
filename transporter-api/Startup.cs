@@ -53,6 +53,11 @@ namespace transporter_api
                     if (!await MobileSocket.TryConnect(context))
                         context.Response.StatusCode = 400;
                 }
+                else if (context.Request.Path == "/browser")
+                {
+                    if (!await BrowserSocket.TryConnect(context))
+                        context.Response.StatusCode = 400;
+                }
                 else
                 {
                     await next();
