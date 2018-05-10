@@ -9,11 +9,13 @@ namespace TransporterApi.Tests
         [Fact]
         public void Test1()
         {
-            string answer = MobileSocket.ParseMobileSocketMessage(
-@"{""operation"":""position"", ""payload"":{""latitude"": 37.4219983, ""longitude"": -122.081}}");
+            var success = MobileSocket.TryParseMobilePosition(
+@"{""operation"":""position"", ""payload"":{""latitude"": 37.4219983, ""longitude"": -122.081}}",
+            out GeoPoint position);
 
-            Assert.Equal("Hi! Got it, your position: 37,4219983, -122,081", 
-                answer);
+            Assert.True(success);
+            Assert.Equal(37.4219983, position.Latitude);
+            Assert.Equal(-122.081, position.Longitude);
         }
     }
 }

@@ -64,7 +64,9 @@ namespace transporter_api.WebSockets
             }
         };
 
-        public static Dictionary<int, int> Drivers;
+        public static ConcurrentDictionary<int, GeoPoint> Drivers
+            = new ConcurrentDictionary<int, GeoPoint>();
+
         public static ConcurrentDictionary<int, WebSocket> MobileWebSockets
             = new ConcurrentDictionary<int, WebSocket>();
 
@@ -80,12 +82,6 @@ namespace transporter_api.WebSockets
         public static class Operation
         {
             public const string Position = "position";
-        }
-
-        public class Position
-        {
-            public double Latitude { get; set; }
-            public double Longitude { get; set; }
         }
 
         public static async Task<bool> TryConnect(HttpContext context)
@@ -121,11 +117,20 @@ namespace transporter_api.WebSockets
             while (!result.CloseStatus.HasValue)
             {
                 var message = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                string answerMessage = ParseMobileSocketMessage(message);
 
-                if (message != null)
-                    await SendAsync(webSocket, answerMessage + $" --driverId: {driverId}, " +
-                        $"opened mobile sockets: {MobileWebSockets.Count}");
+                if (TryParseMobilePosition(message, out GeoPoint position))
+                {
+                    Drivers.AddOrUpdate(driverId, position, (key, oldPosition) => position);
+                    await SendAsync(webSocket, $"position saved, --driverId: {driverId}, " +
+                        $"opened mobile sockets: {MobileWebSockets.Count}, " +
+                        $"drivers positions count: {Drivers.Count}");
+                }
+                else
+                {
+                    await SendAsync(webSocket, $"ERROR position not saved --driverId: {driverId}, " +
+                        $"opened mobile sockets: {MobileWebSockets.Count}" +
+                        $"drivers positions count: {Drivers.Count}");
+                }
 
                 result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer),
                     CancellationToken.None);
@@ -135,8 +140,9 @@ namespace transporter_api.WebSockets
             MobileWebSockets.TryRemove(driverId, out var removedWebSocket);
         }
 
-        public static string ParseMobileSocketMessage(string message)
+        public static bool TryParseMobilePosition(string message, out GeoPoint position)
         {
+            position = null;
             var mobileSocketMessage = JsonConvert.DeserializeObject<MobileSocketMessage>(message);
 
             JToken token = JObject.Parse(message);
@@ -144,21 +150,9 @@ namespace transporter_api.WebSockets
             var operationType = (string)token.SelectToken("operation");
 
             if (operationType == Operation.Position)
-            {
-                var position = token.SelectToken("payload").ToObject<Position>();
-                //JsonConvert.DeserializeObject<Position>(mobileSocketMessage.Payload);
-                //var position = (Position)Convert.ChangeType(mobileSocketMessage.Payload,
-                //    typeof(Position));
+                position = token.SelectToken("payload").ToObject<GeoPoint>();
 
-
-                return
-                    $"Hi! Got it, your position: {position.Latitude}, {position.Longitude}";
-                //await SendAsync(webSocket, $"payload: {mobileSocketMessage.Payload}");
-            }
-            else
-            {
-                return "=(";
-            }
+            return position != null;
         }
 
         public static async Task SendAsync(WebSocket webSocket, string message)
@@ -219,7 +213,7 @@ namespace transporter_api.WebSockets
                 {
                     await SendAsync(mobileWs.Value, message);
                 }
-                catch (WebSocketException)
+                catch (Exception)
                 {
                     disposedWebSocketsKeys.Add(mobileWs.Key);
                 }
