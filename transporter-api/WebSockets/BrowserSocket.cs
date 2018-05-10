@@ -32,7 +32,10 @@ namespace transporter_api.WebSockets
         {
             while (true)
             {
-                await webSocket.SendAsync(MobileSocket.Drivers);
+                await webSocket.SendAsync(new MapSocketMessage
+                {
+                    Payload = MobileSocket.Drivers.Values.ToArray()
+                });
                 Thread.Sleep(5000);
             }
 
@@ -40,5 +43,18 @@ namespace transporter_api.WebSockets
                 "end",
                 CancellationToken.None);
         }
+    }
+
+    public class MapSocketMessage
+    {
+        public string Operation = "map";
+        public VehicleOnMap[] Payload { get; set; }
+    }
+
+    public class VehicleOnMap
+    {
+        public string Id { get; set; }
+        public GeoPoint Position { get; set; }
+        public string Badge { get; set; }
     }
 }

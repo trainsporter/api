@@ -65,8 +65,8 @@ namespace transporter_api.WebSockets
             }
         };
 
-        public static ConcurrentDictionary<int, GeoPoint> Drivers
-            = new ConcurrentDictionary<int, GeoPoint>();
+        public static ConcurrentDictionary<int, VehicleOnMap> Drivers
+            = new ConcurrentDictionary<int, VehicleOnMap>();
 
         public static ConcurrentDictionary<int, WebSocket> MobileWebSockets
             = new ConcurrentDictionary<int, WebSocket>();
@@ -121,7 +121,13 @@ namespace transporter_api.WebSockets
 
                 if (TryParseMobilePosition(message, out GeoPoint position))
                 {
-                    Drivers.AddOrUpdate(driverId, position, (key, oldPosition) => position);
+                    var vehOnMap = new VehicleOnMap
+                    {
+                        Id = driverId.ToString(),
+                        Position = position,
+                        Badge = ""
+                    };
+                    Drivers.AddOrUpdate(driverId, vehOnMap, (key, oldPosition) => vehOnMap);
                     await webSocket.SendAsync($"position saved, --driverId: {driverId}, " +
                         $"opened mobile sockets: {MobileWebSockets.Count}, " +
                         $"drivers positions count: {Drivers.Count}");
