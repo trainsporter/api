@@ -30,6 +30,29 @@ namespace transporter_api.WebSockets
 
         public static async Task Connect(HttpContext context, WebSocket webSocket)
         {
+            var tokenSource2 = new CancellationTokenSource();
+            CancellationToken ct = tokenSource2.Token;
+
+            var task = Task.Run(() => Run(webSocket), 
+                tokenSource2.Token);
+
+            var buffer = new byte[1024 * 4];
+            var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer),
+                CancellationToken.None);
+
+            while (!result.CloseStatus.HasValue)
+            {
+                result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer),
+                    CancellationToken.None);
+            }
+
+            tokenSource2.Cancel();
+            await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, 
+            "end", CancellationToken.None);
+        }
+
+        public async static Task Run(WebSocket webSocket)
+        {
             while (true)
             {
                 await webSocket.SendAsync(new MapSocketMessage
@@ -37,11 +60,8 @@ namespace transporter_api.WebSockets
                     Payload = MobileSocket.Drivers.Values.ToArray()
                 });
                 Thread.Sleep(5000);
+                Console.WriteLine("Send drivers to browser");
             }
-
-            await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, 
-                "end",
-                CancellationToken.None);
         }
     }
 
