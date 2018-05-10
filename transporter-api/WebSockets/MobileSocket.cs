@@ -15,6 +15,19 @@ using transporter_api.Extensions;
 
 namespace transporter_api.WebSockets
 {
+    public static class SocketOperation
+    {
+        public static class Mobile
+        {
+            public const string OrderAvailable = "order_available";
+            public const string Position = "position";
+        }
+        public static class Browser
+        {
+            public const string Map = "map";
+        }
+    }
+
     public class GeoPoint
     {
         public double Latitude { get; set; }
@@ -23,7 +36,7 @@ namespace transporter_api.WebSockets
 
     public class OrderAvailablePayload
     {
-        public string Operation { get; set; } = "order_available";
+        public string Operation = SocketOperation.Mobile.OrderAvailable;
         public Order Payload { get; set; }
     }
 
@@ -78,11 +91,6 @@ namespace transporter_api.WebSockets
         {
             public string Operation { get; set; }
             public object Payload { get; set; } 
-        }
-
-        public static class Operation
-        {
-            public const string Position = "position";
         }
 
         public static async Task<bool> TryConnect(HttpContext context)
@@ -156,7 +164,7 @@ namespace transporter_api.WebSockets
 
             var operationType = (string)token.SelectToken("operation");
 
-            if (operationType == Operation.Position)
+            if (operationType == SocketOperation.Mobile.Position)
                 position = token.SelectToken("payload").ToObject<GeoPoint>();
 
             return position != null;
@@ -191,32 +199,25 @@ namespace transporter_api.WebSockets
         {
             foreach (var mobileWs in MobileWebSockets)
             {
-                await mobileWs.Value.SendAsync(JsonConvert.SerializeObject(obj,
+                List<int> disposedWebSocketsKeys = new List<int>();
+
+                try
+                {
+                    await mobileWs.Value.SendAsync(JsonConvert.SerializeObject(obj,
                         new JsonSerializerSettings
                         {
                             ContractResolver = new CamelCasePropertyNamesContractResolver()
                         }));
-            }
-        }
-
-        public static async Task SendToAllMobileSockets(string message)
-        {
-            List<int> disposedWebSocketsKeys = new List<int>();
-            foreach (var mobileWs in MobileWebSockets)
-            {
-                try
-                {
-                    await mobileWs.Value.SendAsync(message);
                 }
-                catch (Exception)
+                catch (WebSocketException)
                 {
                     disposedWebSocketsKeys.Add(mobileWs.Key);
                 }
-            }
 
-            foreach (var disposedWsKey in disposedWebSocketsKeys)
-            {
-                MobileWebSockets.TryRemove(disposedWsKey, out var disposedWs);
+                foreach (var disposedWsKey in disposedWebSocketsKeys)
+                {
+                    MobileWebSockets.TryRemove(disposedWsKey, out var disposedWs);
+                }
             }
         }
 

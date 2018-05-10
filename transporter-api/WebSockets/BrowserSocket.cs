@@ -47,7 +47,7 @@ namespace transporter_api.WebSockets
 
     public class MapSocketMessage
     {
-        public string Operation = "map";
+        public string Operation = SocketOperation.Browser.Map;
         public VehicleOnMap[] Payload { get; set; }
     }
 
