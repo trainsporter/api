@@ -19,6 +19,12 @@ namespace transporter_api.WebSockets
         public double Longitude { get; set; }
     }
 
+    public class OrderAvailablePayload
+    {
+        public string Operation { get; set; } = "order_avalable";
+        public Order Payload { get; set; }
+    }
+
     public class Order
     {
         public string Id { get; set; }
@@ -176,22 +182,31 @@ namespace transporter_api.WebSockets
 
         public static async Task StartSendOrders()
         {
+            int i = 0;
+            Order rdmNewOrder;
             while (true && WsActive)
             {
-                //if (Orders.Count != 0)
-                //{
-                    foreach (var mobileWs in MobileWebSockets)
-                    {
-                        await SendAsync(mobileWs.Value, 
-                            JsonConvert.SerializeObject(Orders,
-                                new JsonSerializerSettings
-                                {
-                                    ContractResolver = new CamelCasePropertyNamesContractResolver()
-                                }));
-                    }
-                //}
-                Thread.Sleep(60000);
+                i++;
+                rdmNewOrder = new Order
+                {
+                    Id = i.ToString(),
+                    Pickup = new GeoPoint { Latitude = Random.NextDouble(), Longitude = Random.NextDouble() },
+                    Dropoff = new GeoPoint { Latitude = Random.NextDouble(), Longitude = Random.NextDouble() },
+                    Status = OrderStatus.Unnassigned
+                };
+                foreach (var mobileWs in MobileWebSockets)
+                {
+                    await SendAsync(mobileWs.Value, 
+                        JsonConvert.SerializeObject(rdmNewOrder,
+                            new JsonSerializerSettings
+                            {
+                                ContractResolver = new CamelCasePropertyNamesContractResolver()
+                            }));
+                }
+                Thread.Sleep(5000);
             }
         }
+
+        public static Random Random = new Random();
     }
 }
