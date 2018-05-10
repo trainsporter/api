@@ -150,6 +150,7 @@ namespace transporter_api.WebSockets
                 result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer),
                     CancellationToken.None);
             }
+            Drivers.TryRemove(driverId, out var removedVehicleOnMap);
             await webSocket.CloseAsync(result.CloseStatus.Value, result.CloseStatusDescription,
                 CancellationToken.None);
             MobileWebSockets.TryRemove(driverId, out var removedWebSocket);
