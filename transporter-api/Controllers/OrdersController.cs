@@ -12,6 +12,7 @@ namespace transporter_api.Controllers
     [Route("orders")]
     public class OrdersController : Controller
     {
+        private static int _orderId = 0;
         // GET api/orders
         [HttpGet]
         public IEnumerable<string> Get()
@@ -30,11 +31,23 @@ namespace transporter_api.Controllers
         [HttpPost]
         public async Task<IActionResult> Post([FromBody]Order newOrder)
         {
-            await MobileSocket.SendToAllMobileSockets(new OrderAvailablePayload
+            try
             {
-                Payload = newOrder
-            });
-            return Ok();
+                _orderId++;
+                newOrder.Id = _orderId.ToString();
+                newOrder.Status = OrderStatus.Unnassigned;
+
+                await MobileSocket.SendToAllMobileSockets(new OrderAvailablePayload
+                {
+                    Payload = newOrder
+                });
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+                throw;
+            }
         }
 
         // PUT api/orders/5
