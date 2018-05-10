@@ -33,7 +33,7 @@ namespace transporter_api.WebSockets
             while (true)
             {
                 await webSocket.SendAsync(MobileSocket.Drivers);
-                Thread.Sleep(5);
+                Thread.Sleep(5000);
             }
 
             await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, 
