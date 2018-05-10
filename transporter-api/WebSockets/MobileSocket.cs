@@ -219,7 +219,7 @@ namespace transporter_api.WebSockets
                 {
                     await SendAsync(mobileWs.Value, message);
                 }
-                catch (ObjectDisposedException)
+                catch (WebSocketException)
                 {
                     disposedWebSocketsKeys.Add(mobileWs.Key);
                 }

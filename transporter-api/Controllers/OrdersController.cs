@@ -41,7 +41,7 @@ namespace transporter_api.Controllers
                 {
                     Payload = newOrder
                 });
-                return Ok();
+                return Ok(newOrder);
             }
             catch (Exception ex)
             {
