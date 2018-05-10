@@ -206,7 +206,11 @@ namespace transporter_api.WebSockets
         {
             foreach (var mobileWs in MobileWebSockets)
             {
-                await SendAsync(mobileWs.Value, JsonConvert.SerializeObject(obj));
+                await SendAsync(mobileWs.Value, JsonConvert.SerializeObject(obj,
+                        new JsonSerializerSettings
+                        {
+                            ContractResolver = new CamelCasePropertyNamesContractResolver()
+                        }));
             }
         }
 
