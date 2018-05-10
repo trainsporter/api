@@ -100,12 +100,12 @@ namespace transporter_api.WebSockets
                             await context.WebSockets.AcceptWebSocketAsync();
 
                         MobileWebSockets.TryAdd(driverId, webSocket);
-                        if (!SendIsRunned)
-                        {
-                            WsActive = true;
-                            SendIsRunned = true;
-                            Task.Run(StartSendOrders);
-                        }
+                        //if (!SendIsRunned)
+                        //{
+                        //    WsActive = true;
+                        //    SendIsRunned = true;
+                        //    Task.Run(StartSendOrders);
+                        //}
 
                         await Connect(context, webSocket, driverId);
                         return true;
@@ -182,7 +182,6 @@ namespace transporter_api.WebSockets
         {
             int i = 0;
             Order rdmNewOrder;
-            Console.WriteLine("create random order");
             while (true && WsActive)
             {
                 i++;
@@ -193,20 +192,29 @@ namespace transporter_api.WebSockets
                     Dropoff = new GeoPoint { Latitude = Random.Next() + Random.NextDouble(), Longitude = Random.Next() + Random.NextDouble() },
                     Status = OrderStatus.Unnassigned
                 };
-                Console.WriteLine(i);
-                foreach (var mobileWs in MobileWebSockets)
+
+                await SendToAllMobileSockets(new OrderAvailablePayload
                 {
-                    await SendAsync(mobileWs.Value, 
-                        JsonConvert.SerializeObject(new OrderAvailablePayload
-                        {
-                            Payload = rdmNewOrder
-                        },
-                        new JsonSerializerSettings
-                        {
-                            ContractResolver = new CamelCasePropertyNamesContractResolver()
-                        }));
-                }
+                    Payload = rdmNewOrder
+                });
+
                 Thread.Sleep(6000);
+            }
+        }
+
+        public static async Task SendToAllMobileSockets(object obj)
+        {
+            foreach (var mobileWs in MobileWebSockets)
+            {
+                await SendAsync(mobileWs.Value, JsonConvert.SerializeObject(obj));
+            }
+        }
+
+        public static async Task SendToAllMobileSockets(string message)
+        {
+            foreach (var mobileWs in MobileWebSockets)
+            {
+                await SendAsync(mobileWs.Value, message);
             }
         }
 
