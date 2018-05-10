@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.WebUtilities;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -131,6 +132,7 @@ namespace transporter_api.WebSockets
             await webSocket.CloseAsync(result.CloseStatus.Value, result.CloseStatusDescription,
                 CancellationToken.None);
             WsActive = false;
+            SendIsRunned = false;
         }
 
         public static string ParseMobileSocketMessage(string message)
@@ -180,10 +182,15 @@ namespace transporter_api.WebSockets
                 //{
                     foreach (var mobileWs in MobileWebSockets)
                     {
-                        await SendAsync(mobileWs.Value, JsonConvert.SerializeObject(Orders));
+                        await SendAsync(mobileWs.Value, 
+                            JsonConvert.SerializeObject(Orders,
+                                new JsonSerializerSettings
+                                {
+                                    ContractResolver = new CamelCasePropertyNamesContractResolver()
+                                }));
                     }
                 //}
-                Thread.Sleep(5000);
+                Thread.Sleep(60000);
             }
         }
     }
