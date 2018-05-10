@@ -103,8 +103,8 @@ namespace transporter_api.WebSockets
                         if (!SendIsRunned)
                         {
                             WsActive = true;
-                            Task.Run(StartSendOrders);
                             SendIsRunned = true;
+                            Task.Run(StartSendOrders);
                         }
 
                         await Connect(context, webSocket, driverId);
@@ -191,8 +191,8 @@ namespace transporter_api.WebSockets
                 rdmNewOrder = new Order
                 {
                     Id = i.ToString(),
-                    Pickup = new GeoPoint { Latitude = Random.NextDouble(), Longitude = Random.NextDouble() },
-                    Dropoff = new GeoPoint { Latitude = Random.NextDouble(), Longitude = Random.NextDouble() },
+                    Pickup = new GeoPoint { Latitude = Random.Next() + Random.NextDouble(), Longitude = Random.Next() + Random.NextDouble() },
+                    Dropoff = new GeoPoint { Latitude = Random.Next() + Random.NextDouble(), Longitude = Random.Next() + Random.NextDouble() },
                     Status = OrderStatus.Unnassigned
                 };
                 Console.WriteLine(i);
