@@ -222,7 +222,6 @@ namespace transporter_api.WebSockets
                 catch (ObjectDisposedException)
                 {
                     disposedWebSocketsKeys.Add(mobileWs.Key);
-                    throw;
                 }
             }
 
