@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.WebSockets;
@@ -64,8 +65,8 @@ namespace transporter_api.WebSockets
         };
 
         public static Dictionary<int, int> Drivers;
-        public static Dictionary<int, WebSocket> MobileWebSockets
-            = new Dictionary<int, WebSocket>();
+        public static ConcurrentDictionary<int, WebSocket> MobileWebSockets
+            = new ConcurrentDictionary<int, WebSocket>();
 
         public static bool SendIsRunned = false;
         public static bool WsActive = false;
@@ -137,6 +138,7 @@ namespace transporter_api.WebSockets
             }
             await webSocket.CloseAsync(result.CloseStatus.Value, result.CloseStatusDescription,
                 CancellationToken.None);
+            MobileWebSockets.TryRemove(driverId, out var removedWebSocket);
         }
 
         public static string ParseMobileSocketMessage(string message)
