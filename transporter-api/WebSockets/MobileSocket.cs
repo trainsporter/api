@@ -14,8 +14,8 @@ namespace transporter_api.WebSockets
 {
     public class GeoPoint
     {
-        public decimal Latitude { get; set; }
-        public decimal Longitude { get; set; }
+        public double Latitude { get; set; }
+        public double Longitude { get; set; }
     }
 
     public class Order
@@ -38,7 +38,24 @@ namespace transporter_api.WebSockets
 
     public static class MobileSocket
     {
-        public static List<Order> Orders;
+        public static List<Order> Orders = new List<Order>
+        {
+            new Order
+            {
+                Id = "1",
+                Pickup = new GeoPoint{Latitude = 55.785681, Longitude = 49.235803},
+                Dropoff = new GeoPoint{Latitude = 55.830431, Longitude = 49.066081},
+                Status = OrderStatus.Unnassigned
+            },
+            new Order
+            {
+                Id = "2",
+                Pickup = new GeoPoint{Latitude = 55.823864, Longitude = 49.127644},
+                Dropoff = new GeoPoint{Latitude = 55.788192, Longitude = 49.121085},
+                Status = OrderStatus.Unnassigned
+            }
+        };
+
         public static Dictionary<int, int> Drivers;
         public static Dictionary<int, WebSocket> MobileWebSockets
             = new Dictionary<int, WebSocket>();
@@ -59,8 +76,8 @@ namespace transporter_api.WebSockets
 
         public class Position
         {
-            public decimal Latitude { get; set; }
-            public decimal Longitude { get; set; }
+            public double Latitude { get; set; }
+            public double Longitude { get; set; }
         }
 
         public static async Task<bool> TryConnect(HttpContext context)
@@ -163,10 +180,10 @@ namespace transporter_api.WebSockets
                 //{
                     foreach (var mobileWs in MobileWebSockets)
                     {
-                        await SendAsync(mobileWs.Value, $"your id: {mobileWs.Key}");
+                        await SendAsync(mobileWs.Value, JsonConvert.SerializeObject(Orders));
                     }
                 //}
-                Thread.Sleep(1000);
+                Thread.Sleep(5000);
             }
         }
     }
