@@ -184,6 +184,7 @@ namespace transporter_api.WebSockets
         {
             int i = 0;
             Order rdmNewOrder;
+            Console.WriteLine("create random order");
             while (true && WsActive)
             {
                 i++;
@@ -194,14 +195,18 @@ namespace transporter_api.WebSockets
                     Dropoff = new GeoPoint { Latitude = Random.NextDouble(), Longitude = Random.NextDouble() },
                     Status = OrderStatus.Unnassigned
                 };
+                Console.WriteLine(i);
                 foreach (var mobileWs in MobileWebSockets)
                 {
                     await SendAsync(mobileWs.Value, 
-                        JsonConvert.SerializeObject(rdmNewOrder,
-                            new JsonSerializerSettings
-                            {
-                                ContractResolver = new CamelCasePropertyNamesContractResolver()
-                            }));
+                        JsonConvert.SerializeObject(new OrderAvailablePayload
+                        {
+                            Payload = rdmNewOrder
+                        },
+                        new JsonSerializerSettings
+                        {
+                            ContractResolver = new CamelCasePropertyNamesContractResolver()
+                        }));
                 }
                 Thread.Sleep(5000);
             }
