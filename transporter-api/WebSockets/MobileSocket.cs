@@ -100,13 +100,7 @@ namespace transporter_api.WebSockets
                         WebSocket webSocket = 
                             await context.WebSockets.AcceptWebSocketAsync();
 
-                        MobileWebSockets.TryAdd(driverId, webSocket);
-                        //if (!SendIsRunned)
-                        //{
-                        //    WsActive = true;
-                        //    SendIsRunned = true;
-                        //    Task.Run(StartSendOrders);
-                        //}
+                        MobileWebSockets.AddOrUpdate(driverId, webSocket, (key, oldWs) => webSocket);
 
                         await Connect(context, webSocket, driverId);
                         return true;
@@ -131,7 +125,7 @@ namespace transporter_api.WebSockets
 
                 if (message != null)
                     await SendAsync(webSocket, answerMessage + $" --driverId: {driverId}, " +
-                        $"sockets count: {MobileWebSockets.Count}");
+                        $"opened mobile sockets: {MobileWebSockets.Count}");
 
                 result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer),
                     CancellationToken.None);
@@ -218,9 +212,23 @@ namespace transporter_api.WebSockets
 
         public static async Task SendToAllMobileSockets(string message)
         {
+            List<int> disposedWebSocketsKeys = new List<int>();
             foreach (var mobileWs in MobileWebSockets)
             {
-                await SendAsync(mobileWs.Value, message);
+                try
+                {
+                    await SendAsync(mobileWs.Value, message);
+                }
+                catch (ObjectDisposedException)
+                {
+                    disposedWebSocketsKeys.Add(mobileWs.Key);
+                    throw;
+                }
+            }
+
+            foreach (var disposedWsKey in disposedWebSocketsKeys)
+            {
+                MobileWebSockets.TryRemove(disposedWsKey, out var disposedWs);
             }
         }
 
