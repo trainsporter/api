@@ -21,7 +21,7 @@ namespace transporter_api.WebSockets
 
     public class OrderAvailablePayload
     {
-        public string Operation { get; set; } = "order_avalable";
+        public string Operation { get; set; } = "order_available";
         public Order Payload { get; set; }
     }
 
@@ -137,8 +137,6 @@ namespace transporter_api.WebSockets
             }
             await webSocket.CloseAsync(result.CloseStatus.Value, result.CloseStatusDescription,
                 CancellationToken.None);
-            WsActive = false;
-            SendIsRunned = false;
         }
 
         public static string ParseMobileSocketMessage(string message)
@@ -208,7 +206,7 @@ namespace transporter_api.WebSockets
                             ContractResolver = new CamelCasePropertyNamesContractResolver()
                         }));
                 }
-                Thread.Sleep(5000);
+                Thread.Sleep(6000);
             }
         }
 
