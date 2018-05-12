@@ -43,7 +43,7 @@ namespace transporter_api.WebSockets
     public class Order
     {
         public string Id { get; set; }
-        public string Driver_Id { get; set; }
+        public string Driver_id { get; set; }
         public GeoPoint Pickup { get; set; }
         public GeoPoint Dropoff { get; set; }
         public string Status { get; set; }

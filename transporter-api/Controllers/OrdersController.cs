@@ -67,20 +67,20 @@ namespace transporter_api.Controllers
         public async Task<IActionResult> Put(int id, [FromBody]Order updOrder)
         {
             var order = Orders.SingleOrDefault(o => o.Id == id.ToString());
-                
             if (order == null) return NotFound();
 
             if (!typeof(OrderStatus)
                 .GetAllKeys().Contains(updOrder.Status))
                 return BadRequest("status field not valid");
 
-            if (!MobileSocket.Drivers.ContainsKey(int.Parse(updOrder.Driver_Id)))
-                return BadRequest($"driver_id with id = \"{updOrder.Driver_Id}\" not exists");
+            if (!MobileSocket.Drivers.ContainsKey(int.Parse(updOrder.Driver_id)))
+                return BadRequest($"driver_id = \"{updOrder.Driver_id}\" not exists");
 
             order.Status = updOrder.Status;
-            order.Driver_Id = updOrder.Driver_Id;
+            order.Driver_id = updOrder.Driver_id;
             updOrder.Pickup = order.Pickup;
             updOrder.Dropoff = order.Dropoff;
+            updOrder.Id = order.Id;
 
             return Ok(updOrder);
         }
