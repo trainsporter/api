@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
@@ -87,6 +89,21 @@ namespace transporter_api.Controllers
         [HttpDelete("{id}")]
         public void Delete(int id)
         {
+        }
+    }
+
+    public static class TypeExtensions
+    {
+        private static readonly ConcurrentDictionary<string, string[]> AllKeys =
+            new ConcurrentDictionary<string, string[]>();
+
+        public static string[] GetAllKeys(this Type type)
+        {
+            // ReSharper disable once AssignNullToNotNullAttribute
+            return AllKeys.GetOrAdd(type.FullName, k => type
+                .GetFields(BindingFlags.Public | BindingFlags.Static)
+                .Select(f => (string)f.GetValue(null))
+                .ToArray());
         }
     }
 }
