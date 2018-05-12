@@ -105,12 +105,12 @@ namespace transporter_api.WebSockets
                 {
                     var driverId = driverIdString.ToString();
 
-                    WebSocket webSocket = 
+                    WebSocket webSocket =
                         await context.WebSockets.AcceptWebSocketAsync();
 
                     MobileWebSockets.AddOrUpdate(driverId, webSocket, (key, oldWs) => webSocket);
 
-                    await Connect(context, webSocket, driverId);
+                    await ConnectRec(context, webSocket, driverId);
                     return true;
                 }
             }
@@ -118,6 +118,21 @@ namespace transporter_api.WebSockets
             //byte[] data = Encoding.UTF8.GetBytes(s);
             //await context.Response.Body.WriteAsync(data, 0, data.Length);
             return false;
+
+        }
+
+        public static async Task ConnectRec(HttpContext context, WebSocket webSocket,
+            string driverId)
+        {
+            try
+            {
+                await Connect(context, webSocket, driverId);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+                await ConnectRec(context, webSocket, driverId);
+            }
         }
 
         public static async Task Connect(HttpContext context, WebSocket webSocket, 
@@ -134,7 +149,7 @@ namespace transporter_api.WebSockets
                 {
                     var vehOnMap = new VehicleOnMap
                     {
-                        Id = driverId.ToString(),
+                        Id = driverId,
                         Position = position,
                         Badge = ""
                     };
