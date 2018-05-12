@@ -73,8 +73,8 @@ namespace transporter_api.Controllers
                 .GetAllKeys().Contains(updOrder.Status))
                 return BadRequest("status field not valid");
 
-            if (!MobileSocket.Drivers.ContainsKey(int.Parse(updOrder.Driver_id)))
-                return BadRequest($"driver_id = \"{updOrder.Driver_id}\" not exists");
+            //if (!MobileSocket.Drivers.ContainsKey(int.Parse(updOrder.Driver_id)))
+            //    return BadRequest($"driver_id = \"{updOrder.Driver_id}\" not exists");
 
             order.Status = updOrder.Status;
             order.Driver_id = updOrder.Driver_id;
