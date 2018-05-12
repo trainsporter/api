@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using transporter_api.Extensions;
 using transporter_api.WebSockets;
 
 namespace transporter_api.Controllers
@@ -12,6 +13,8 @@ namespace transporter_api.Controllers
     [Route("orders")]
     public class OrdersController : Controller
     {
+        public static List<Order> Orders = new List<Order>();
+
         private static int _orderId = 0;
         // GET api/orders
         [HttpGet]
@@ -36,6 +39,7 @@ namespace transporter_api.Controllers
                 _orderId++;
                 newOrder.Id = _orderId.ToString();
                 newOrder.Status = OrderStatus.Unnassigned;
+                Orders.Add(newOrder);
 
                 await MobileSocket.SendToAllMobileSockets(new OrderAvailablePayload
                 {
@@ -54,6 +58,29 @@ namespace transporter_api.Controllers
         [HttpPut("{id}")]
         public void Put(int id, [FromBody]string value)
         {
+
+        }
+
+        [HttpPut("{id}/status")]
+        public async Task<IActionResult> Put(int id, [FromBody]Order updOrder)
+        {
+            var order = Orders.SingleOrDefault(o => o.Id == id.ToString());
+                
+            if (order == null) return NotFound();
+
+            if (!typeof(OrderStatus)
+                .GetAllKeys().Contains(updOrder.Status))
+                return BadRequest("status field not valid");
+
+            if (!MobileSocket.Drivers.ContainsKey(int.Parse(updOrder.Driver_Id)))
+                return BadRequest($"driver_id with id = \"{updOrder.Driver_Id}\" not exists");
+
+            order.Status = updOrder.Status;
+            order.Driver_Id = updOrder.Driver_Id;
+            updOrder.Pickup = order.Pickup;
+            updOrder.Dropoff = order.Dropoff;
+
+            return Ok(updOrder);
         }
 
         // DELETE api/orders/5
