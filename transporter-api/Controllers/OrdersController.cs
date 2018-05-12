@@ -40,7 +40,7 @@ namespace transporter_api.Controllers
             {
                 _orderId++;
                 newOrder.Id = _orderId.ToString();
-                newOrder.Status = OrderStatus.Unnassigned;
+                newOrder.Status = OrderStatus.Unassigned;
                 Orders.Add(newOrder);
 
                 await MobileSocket.SendToAllMobileSockets(new OrderAvailablePayload
@@ -63,15 +63,50 @@ namespace transporter_api.Controllers
 
         }
 
+        //public string[] statusSequence = new
+        //{
+        //    OrderStatus.Unassigned,
+        //    OrderStatus.
+        //};
+
         [HttpPut("{id}/status")]
         public async Task<IActionResult> Put(int id, [FromBody]Order updOrder)
         {
+            string newStatus = updOrder.Status;
             var order = Orders.SingleOrDefault(o => o.Id == id.ToString());
             if (order == null) return NotFound();
 
             if (!typeof(OrderStatus)
                 .GetAllKeys().Contains(updOrder.Status))
                 return BadRequest("status field not valid");
+
+
+            switch (order.Status)
+            {
+                case OrderStatus.Unassigned:
+                    if (newStatus != OrderStatus.Assigned)
+                        return BadRequest($"only {OrderStatus.Assigned} after {OrderStatus.Unassigned}");
+                    break;
+                case OrderStatus.Assigned:
+                    if (order.Driver_id != updOrder.Driver_id)
+                        return BadRequest($"access denied");
+
+                    if (newStatus != OrderStatus.Serving ||
+                        newStatus != OrderStatus.Unassigned)
+                        return BadRequest($"only {OrderStatus.Serving} or {OrderStatus.Unassigned}" +
+                            $" after {OrderStatus.Unassigned}");
+                    break;
+                case OrderStatus.Serving:
+                    if (order.Driver_id != updOrder.Driver_id)
+                        return BadRequest($"access denied");
+
+                    if (newStatus != OrderStatus.Done)
+                        return BadRequest($"only {OrderStatus.Done} after {OrderStatus.Serving}");
+                    break;
+                default:
+                    break;
+            }
+
 
             //if (!MobileSocket.Drivers.ContainsKey(int.Parse(updOrder.Driver_id)))
             //    return BadRequest($"driver_id = \"{updOrder.Driver_id}\" not exists");

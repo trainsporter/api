@@ -51,7 +51,7 @@ namespace transporter_api.WebSockets
 
     public class OrderStatus
     {
-        public const string Unnassigned = "unnassigned";
+        public const string Unassigned = "unassigned";
         public const string Assigned = "assigned";
         public const string Serving = "serving";
         public const string Done = "done";
@@ -68,22 +68,24 @@ namespace transporter_api.WebSockets
                 Id = "1",
                 Pickup = new GeoPoint{Latitude = 55.785681, Longitude = 49.235803},
                 Dropoff = new GeoPoint{Latitude = 55.830431, Longitude = 49.066081},
-                Status = OrderStatus.Unnassigned
+                Status = OrderStatus.Unassigned
             },
             new Order
             {
                 Id = "2",
                 Pickup = new GeoPoint{Latitude = 55.823864, Longitude = 49.127644},
                 Dropoff = new GeoPoint{Latitude = 55.788192, Longitude = 49.121085},
-                Status = OrderStatus.Unnassigned
+                Status = OrderStatus.Unassigned
             }
         };
 
-        public static ConcurrentDictionary<int, VehicleOnMap> Drivers
-            = new ConcurrentDictionary<int, VehicleOnMap>();
+        // key driverId
+        public static ConcurrentDictionary<string, VehicleOnMap> Drivers
+            = new ConcurrentDictionary<string, VehicleOnMap>();
 
-        public static ConcurrentDictionary<int, WebSocket> MobileWebSockets
-            = new ConcurrentDictionary<int, WebSocket>();
+        // key driverId
+        public static ConcurrentDictionary<string, WebSocket> MobileWebSockets
+            = new ConcurrentDictionary<string, WebSocket>();
 
         public static bool SendIsRunned = false;
         public static bool WsActive = false;
@@ -101,16 +103,15 @@ namespace transporter_api.WebSockets
                 var queryDict = QueryHelpers.ParseQuery(context.Request.QueryString.ToString());
                 if (queryDict.TryGetValue("driver_id", out var driverIdString))
                 {
-                    if (int.TryParse(driverIdString.ToString(), out int driverId))
-                    {
-                        WebSocket webSocket = 
-                            await context.WebSockets.AcceptWebSocketAsync();
+                    var driverId = driverIdString.ToString();
 
-                        MobileWebSockets.AddOrUpdate(driverId, webSocket, (key, oldWs) => webSocket);
+                    WebSocket webSocket = 
+                        await context.WebSockets.AcceptWebSocketAsync();
 
-                        await Connect(context, webSocket, driverId);
-                        return true;
-                    }
+                    MobileWebSockets.AddOrUpdate(driverId, webSocket, (key, oldWs) => webSocket);
+
+                    await Connect(context, webSocket, driverId);
+                    return true;
                 }
             }
             //var s = "driver_id is invalid";
@@ -119,7 +120,8 @@ namespace transporter_api.WebSockets
             return false;
         }
 
-        public static async Task Connect(HttpContext context, WebSocket webSocket, int driverId)
+        public static async Task Connect(HttpContext context, WebSocket webSocket, 
+            string driverId)
         {
             var buffer = new byte[1024 * 4];
             WebSocketReceiveResult result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer),
@@ -185,7 +187,7 @@ namespace transporter_api.WebSockets
                     Id = i.ToString(),
                     Pickup = new GeoPoint { Latitude = Random.Next() + Random.NextDouble(), Longitude = Random.Next() + Random.NextDouble() },
                     Dropoff = new GeoPoint { Latitude = Random.Next() + Random.NextDouble(), Longitude = Random.Next() + Random.NextDouble() },
-                    Status = OrderStatus.Unnassigned
+                    Status = OrderStatus.Unassigned
                 };
 
                 await SendToAllMobileSockets(new OrderAvailablePayload
@@ -201,7 +203,7 @@ namespace transporter_api.WebSockets
         {
             foreach (var mobileWs in MobileWebSockets)
             {
-                List<int> disposedWebSocketsKeys = new List<int>();
+                List<string> disposedWebSocketsKeys = new List<string>();
 
                 try
                 {
