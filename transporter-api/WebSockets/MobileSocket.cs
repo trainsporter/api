@@ -105,10 +105,18 @@ namespace transporter_api.WebSockets
                 {
                     var driverId = driverIdString.ToString();
 
+                    if (MobileWebSockets.TryGetValue(driverId, out WebSocket oldWebSocket))
+                    {
+                        await oldWebSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, 
+                            $"new socket opened by driver_id = \"{driverId}\"",
+                            CancellationToken.None);
+                    }
+
                     WebSocket webSocket =
                         await context.WebSockets.AcceptWebSocketAsync();
 
-                    MobileWebSockets.AddOrUpdate(driverId, webSocket, (key, oldWs) => webSocket);
+                    if (!MobileWebSockets.TryAdd(driverId, webSocket))
+                        Console.WriteLine($"socket already exist for driver_id = \"{driverId}\"");
 
                     await ConnectRec(context, webSocket, driverId);
                     return true;
@@ -131,7 +139,10 @@ namespace transporter_api.WebSockets
             catch (Exception ex)
             {
                 Console.WriteLine(ex.ToString());
-                await ConnectRec(context, webSocket, driverId);
+                await webSocket.CloseAsync(WebSocketCloseStatus.InternalServerError,
+                    $"new socket opened by driver_id = \"{driverId}\"",
+                    CancellationToken.None);
+                //await ConnectRec(context, webSocket, driverId);
             }
         }
 
@@ -168,10 +179,14 @@ namespace transporter_api.WebSockets
                 result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer),
                     CancellationToken.None);
             }
-            Drivers.TryRemove(driverId, out var removedVehicleOnMap);
+
+            if (!Drivers.TryRemove(driverId, out var removedVehicleOnMap))
+                Console.WriteLine($"cant remove from drivers after ws disconnect, close status: \"{result.CloseStatus.Value}\"");
+            if (!MobileWebSockets.TryRemove(driverId, out var removedWebSocket))
+                Console.WriteLine($"cant remove from sockets after ws disconnect, close status: \"{result.CloseStatus.Value}\"");
+
             await webSocket.CloseAsync(result.CloseStatus.Value, result.CloseStatusDescription,
                 CancellationToken.None);
-            MobileWebSockets.TryRemove(driverId, out var removedWebSocket);
         }
 
         public static bool TryParseMobilePosition(string message, out GeoPoint position)
