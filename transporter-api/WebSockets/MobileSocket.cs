@@ -142,6 +142,7 @@ namespace transporter_api.WebSockets
                     Console.WriteLine($"cant remove from drivers after ws exception");
                 if (!MobileWebSockets.TryRemove(driverId, out var removedWebSocket))
                     Console.WriteLine($"cant remove from sockets after ws exception");
+                throw;
             }
         }
 
