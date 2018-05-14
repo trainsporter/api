@@ -142,7 +142,10 @@ namespace transporter_api.WebSockets
                 await webSocket.CloseAsync(WebSocketCloseStatus.InternalServerError,
                     $"new socket opened by driver_id = \"{driverId}\"",
                     CancellationToken.None);
-                //await ConnectRec(context, webSocket, driverId);
+                if (!Drivers.TryRemove(driverId, out var removedVehicleOnMap))
+                    Console.WriteLine($"cant remove from drivers after ws exception");
+                if (!MobileWebSockets.TryRemove(driverId, out var removedWebSocket))
+                    Console.WriteLine($"cant remove from sockets after ws exception");
             }
         }
 
@@ -181,9 +184,9 @@ namespace transporter_api.WebSockets
             }
 
             if (!Drivers.TryRemove(driverId, out var removedVehicleOnMap))
-                Console.WriteLine($"cant remove from drivers after ws disconnect, close status: \"{result.CloseStatus.Value}\"");
+                Console.WriteLine($"cant remove from drivers after ws closing, close status: \"{result.CloseStatus.Value}\"");
             if (!MobileWebSockets.TryRemove(driverId, out var removedWebSocket))
-                Console.WriteLine($"cant remove from sockets after ws disconnect, close status: \"{result.CloseStatus.Value}\"");
+                Console.WriteLine($"cant remove from sockets after ws closing, close status: \"{result.CloseStatus.Value}\"");
 
             await webSocket.CloseAsync(result.CloseStatus.Value, result.CloseStatusDescription,
                 CancellationToken.None);
