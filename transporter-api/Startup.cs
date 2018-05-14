@@ -72,4 +72,27 @@ namespace transporter_api
             app.UseMvc();
         }
     }
+
+    public class ErrorLoggingMiddleware
+    {
+        private readonly RequestDelegate _next;
+
+        public ErrorLoggingMiddleware(RequestDelegate next)
+        {
+            _next = next;
+        }
+
+        public async Task Invoke(HttpContext context)
+        {
+            try
+            {
+                await _next(context);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"catched exception in middleware:\r\n{e.ToString()}");
+                throw;
+            }
+        }
+    }
 }
