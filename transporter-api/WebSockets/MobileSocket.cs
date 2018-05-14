@@ -136,12 +136,8 @@ namespace transporter_api.WebSockets
             {
                 await Connect(context, webSocket, driverId);
             }
-            catch (Exception ex)
+            catch (WebSocketException ex)
             {
-                Console.WriteLine(ex.ToString());
-                await webSocket.CloseAsync(WebSocketCloseStatus.InternalServerError,
-                    $"new socket opened by driver_id = \"{driverId}\"",
-                    CancellationToken.None);
                 if (!Drivers.TryRemove(driverId, out var removedVehicleOnMap))
                     Console.WriteLine($"cant remove from drivers after ws exception");
                 if (!MobileWebSockets.TryRemove(driverId, out var removedWebSocket))
