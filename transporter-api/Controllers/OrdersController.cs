@@ -91,10 +91,10 @@ namespace transporter_api.Controllers
                     if (order.Driver_id != updOrder.Driver_id)
                         return BadRequest($"access denied");
 
-                    if (newStatus != OrderStatus.Serving ||
+                    if (newStatus != OrderStatus.Serving &&
                         newStatus != OrderStatus.Unassigned)
                         return BadRequest($"only {OrderStatus.Serving} or {OrderStatus.Unassigned}" +
-                            $" after {OrderStatus.Unassigned}");
+                            $" after {OrderStatus.Assigned}");
                     break;
                 case OrderStatus.Serving:
                     if (order.Driver_id != updOrder.Driver_id)
