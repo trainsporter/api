@@ -164,15 +164,6 @@ namespace transporter_api.WebSockets
                         Badge = ""
                     };
                     Drivers.AddOrUpdate(driverId, vehOnMap, (key, oldPosition) => vehOnMap);
-                    await webSocket.SendAsync($"position saved, --driverId: {driverId}, " +
-                        $"opened mobile sockets: {MobileWebSockets.Count}, " +
-                        $"drivers positions count: {Drivers.Count}");
-                }
-                else
-                {
-                    await webSocket.SendAsync($"ERROR position not saved --driverId: {driverId}, " +
-                        $"opened mobile sockets: {MobileWebSockets.Count}" +
-                        $"drivers positions count: {Drivers.Count}");
                 }
 
                 result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer),
