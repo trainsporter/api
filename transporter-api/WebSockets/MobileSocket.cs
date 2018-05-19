@@ -46,18 +46,17 @@ namespace transporter_api.WebSockets
         public string Driver_id { get; set; }
         public GeoPoint Pickup { get; set; }
         public GeoPoint Dropoff { get; set; }
-        public string Status { get; set; }
+        public OrderStatus Status { get; set; }
     }
 
-    public class OrderStatus
+    public enum OrderStatus
     {
-        public const string Unassigned = "unassigned";
-        public const string Assigned = "assigned";
-        public const string Serving = "serving";
-        public const string Done = "done";
-        public const string Cancelled = "cancelled";
+        unassigned,
+        assigned,
+        serving,
+        done,
+        cancelled
     }
-
 
     public static class MobileSocket
     {
@@ -68,14 +67,14 @@ namespace transporter_api.WebSockets
                 Id = "1",
                 Pickup = new GeoPoint{Latitude = 55.785681, Longitude = 49.235803},
                 Dropoff = new GeoPoint{Latitude = 55.830431, Longitude = 49.066081},
-                Status = OrderStatus.Unassigned
+                Status = OrderStatus.unassigned
             },
             new Order
             {
                 Id = "2",
                 Pickup = new GeoPoint{Latitude = 55.823864, Longitude = 49.127644},
                 Dropoff = new GeoPoint{Latitude = 55.788192, Longitude = 49.121085},
-                Status = OrderStatus.Unassigned
+                Status = OrderStatus.unassigned
             }
         };
 
@@ -217,7 +216,7 @@ namespace transporter_api.WebSockets
                     Id = i.ToString(),
                     Pickup = new GeoPoint { Latitude = Random.Next() + Random.NextDouble(), Longitude = Random.Next() + Random.NextDouble() },
                     Dropoff = new GeoPoint { Latitude = Random.Next() + Random.NextDouble(), Longitude = Random.Next() + Random.NextDouble() },
-                    Status = OrderStatus.Unassigned
+                    Status = OrderStatus.unassigned
                 };
 
                 await SendToAllMobileSockets(new OrderAvailablePayload

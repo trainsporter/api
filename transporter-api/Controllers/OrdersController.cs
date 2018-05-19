@@ -2,9 +2,11 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Internal;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using transporter_api.Extensions;
@@ -40,7 +42,7 @@ namespace transporter_api.Controllers
             {
                 _orderId++;
                 newOrder.Id = _orderId.ToString();
-                newOrder.Status = OrderStatus.Unassigned;
+                newOrder.Status = OrderStatus.unassigned;
                 Orders.Add(newOrder);
 
                 await MobileSocket.SendToAllMobileSockets(new OrderAvailablePayload
@@ -63,53 +65,51 @@ namespace transporter_api.Controllers
 
         }
 
-        //public string[] statusSequence = new
-        //{
-        //    OrderStatus.Unassigned,
-        //    OrderStatus.
-        //};
+        public static Dictionary<OrderStatus, StatusRule> StatusRules =
+            new Dictionary<OrderStatus, StatusRule>
+            {
+                { OrderStatus.unassigned, new StatusRule(false, OrderStatus.assigned) },
+                { OrderStatus.assigned, new StatusRule(true, OrderStatus.serving, OrderStatus.unassigned) },
+                { OrderStatus.serving, new StatusRule(true, OrderStatus.done) },
+                { OrderStatus.done, null },
+                { OrderStatus.cancelled, null },
+            };
+
+
+        public class StatusRule
+        {
+            public OrderStatus[] Next;
+            public bool IsOwned;
+
+            public StatusRule(bool isOwned, params OrderStatus[] nextStatuses)
+            {
+                Next = nextStatuses;
+                IsOwned = isOwned;
+            }
+
+            public string ShowNext()
+            {
+                return Next.Select(x => x.ToString()).Join(",");
+            }
+        }
 
         [HttpPut("{id}/status")]
         public async Task<IActionResult> Put(int id, [FromBody]Order updOrder)
         {
-            string newStatus = updOrder.Status;
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            OrderStatus newStatus = updOrder.Status;
             var order = Orders.SingleOrDefault(o => o.Id == id.ToString());
             if (order == null) return NotFound();
 
-            if (!typeof(OrderStatus)
-                .GetAllKeys().Contains(updOrder.Status))
-                return BadRequest("status field not valid");
+            var rule = StatusRules[order.Status];
 
+            if (rule.IsOwned && order.Driver_id != updOrder.Driver_id)
+                return BadRequest($"access denied");
 
-            switch (order.Status)
-            {
-                case OrderStatus.Unassigned:
-                    if (newStatus != OrderStatus.Assigned)
-                        return BadRequest($"only {OrderStatus.Assigned} after {OrderStatus.Unassigned}");
-                    break;
-                case OrderStatus.Assigned:
-                    if (order.Driver_id != updOrder.Driver_id)
-                        return BadRequest($"access denied");
-
-                    if (newStatus != OrderStatus.Serving &&
-                        newStatus != OrderStatus.Unassigned)
-                        return BadRequest($"only {OrderStatus.Serving} or {OrderStatus.Unassigned}" +
-                            $" after {OrderStatus.Assigned}");
-                    break;
-                case OrderStatus.Serving:
-                    if (order.Driver_id != updOrder.Driver_id)
-                        return BadRequest($"access denied");
-
-                    if (newStatus != OrderStatus.Done)
-                        return BadRequest($"only {OrderStatus.Done} after {OrderStatus.Serving}");
-                    break;
-                default:
-                    break;
-            }
-
-
-            //if (!MobileSocket.Drivers.ContainsKey(int.Parse(updOrder.Driver_id)))
-            //    return BadRequest($"driver_id = \"{updOrder.Driver_id}\" not exists");
+            if (!rule.Next.Contains(newStatus))
+                return BadRequest($"only {rule.ShowNext()} after {order.Status}");
 
             order.Status = updOrder.Status;
             order.Driver_id = updOrder.Driver_id;
