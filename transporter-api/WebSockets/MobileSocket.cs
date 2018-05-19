@@ -239,7 +239,11 @@ namespace transporter_api.WebSockets
                     await mobileWs.Value.SendAsync(JsonConvert.SerializeObject(obj,
                         new JsonSerializerSettings
                         {
-                            ContractResolver = new CamelCasePropertyNamesContractResolver()
+                            ContractResolver = new CamelCasePropertyNamesContractResolver(),
+                            Converters = new List<JsonConverter>()
+                            {
+                                new Newtonsoft.Json.Converters.StringEnumConverter()
+                            }
                         }));
                 }
                 catch (WebSocketException)
