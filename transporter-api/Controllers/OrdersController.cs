@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -10,6 +11,7 @@ using Microsoft.EntityFrameworkCore.Internal;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using transporter_api.Extensions;
+using transporter_api.Models.Dtos;
 using transporter_api.WebSockets;
 
 namespace transporter_api.Controllers
@@ -17,6 +19,11 @@ namespace transporter_api.Controllers
     [Route("orders")]
     public class OrdersController : Controller
     {
+
+        public static string GeocodingApiKey =
+            "AIzaSyDzJOAAULXGQg4syXYuH04XP7tNkfOj_Uw";
+       
+
         public static List<Order> Orders = new List<Order>();
 
         private static int _orderId = 0;
@@ -36,25 +43,71 @@ namespace transporter_api.Controllers
 
         // POST api/orders
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody]Order newOrder)
+        public async Task<IActionResult> Post([FromBody]NewOrderDto newOrderDto)
         {
-            try
-            {
-                _orderId++;
-                newOrder.Id = _orderId.ToString();
-                newOrder.Status = OrderStatus.unassigned;
-                Orders.Add(newOrder);
+            if (!ModelState.IsValid) return BadRequest(ModelState);
 
-                await MobileSocket.SendToAllMobileSockets(new OrderAvailablePayload
-                {
-                    Payload = newOrder
-                });
-                return Ok(newOrder);
-            }
-            catch (Exception ex)
+            _orderId++;
+
+            var pickupPosition = await GetByAddress(newOrderDto.PickUp);
+            if (pickupPosition == null)
+                return BadRequest($"address = \"{newOrderDto.PickUp}\"  not found");
+
+            var dropoffPosition = await GetByAddress(newOrderDto.DropOff);
+            if (dropoffPosition == null)
+                return BadRequest($"address = \"{newOrderDto.DropOff}\" address not found");
+
+            var newOrder = new Order
             {
-                Console.WriteLine(ex.ToString());
-                throw;
+                Id = _orderId.ToString(),
+                Status = OrderStatus.unassigned,
+                Pickup = new GLocation
+                {
+                    Address = newOrderDto.PickUp,
+                    Position = pickupPosition,
+                },
+                Dropoff = new GLocation
+                {
+                    Address = newOrderDto.DropOff,
+                    Position = dropoffPosition,
+                }
+            };
+            Orders.Add(newOrder);
+
+            await MobileSocket.SendToAllMobileSockets(new OrderAvailablePayload
+            {
+                Payload = newOrder
+            });
+            return Ok(newOrder);
+        }
+
+        private async Task<GeoPoint> GetByAddress(string address)
+        {
+            using (var client = new HttpClient())
+            {
+                try
+                {
+                    client.BaseAddress = new Uri("https://maps.googleapis.com");
+                    var response = await client
+                        .GetAsync($"/maps/api/geocode/json?address={address}&key={GeocodingApiKey}");
+                    response.EnsureSuccessStatusCode();
+
+                    var stringResult = await response.Content.ReadAsStringAsync();
+                    var position = JsonConvert.DeserializeObject<GeocodingModel>(stringResult);
+
+                    var geoLocation = position.results.FirstOrDefault();
+                    return (geoLocation != null)
+                        ? new GeoPoint
+                        {
+                            Latitude = geoLocation.geometry.location.lat,
+                            Longitude = geoLocation.geometry.location.lng,
+                        }
+                        : null;
+                }
+                catch (HttpRequestException ex)
+                {
+                    throw;
+                }
             }
         }
 
