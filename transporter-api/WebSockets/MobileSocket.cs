@@ -111,18 +111,14 @@ namespace transporter_api.WebSockets
                     WebSocket webSocket =
                         await context.WebSockets.AcceptWebSocketAsync();
 
-                    if (!MobileWebSockets.TryAdd(driverId, webSocket))
-                        Console.WriteLine($"socket already exist for driver_id = \"{driverId}\"");
+                    MobileWebSockets.AddOrUpdate(driverId, webSocket, 
+                        (key, oldWs) => webSocket);
 
                     await ConnectRec(context, webSocket, driverId);
                     return true;
                 }
             }
-            //var s = "driver_id is invalid";
-            //byte[] data = Encoding.UTF8.GetBytes(s);
-            //await context.Response.Body.WriteAsync(data, 0, data.Length);
             return false;
-
         }
 
         public static async Task ConnectRec(HttpContext context, WebSocket webSocket,
@@ -161,6 +157,10 @@ namespace transporter_api.WebSockets
                         Badge = ""
                     };
                     Drivers.AddOrUpdate(driverId, vehOnMap, (key, oldPosition) => vehOnMap);
+                    BrowserSocket.SendToAllAsync(new MapSocketMessage
+                    {
+                        Payload = Drivers.Values.ToArray()
+                    });
                 }
 
                 result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer),

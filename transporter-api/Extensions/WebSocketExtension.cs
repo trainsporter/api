@@ -30,7 +30,11 @@ namespace transporter_api.Extensions
             string json = JsonConvert.SerializeObject(obj,
                         new JsonSerializerSettings
                         {
-                            ContractResolver = new CamelCasePropertyNamesContractResolver()
+                            ContractResolver = new CamelCasePropertyNamesContractResolver(),
+                            Converters = new List<JsonConverter>()
+                            {
+                                new Newtonsoft.Json.Converters.StringEnumConverter()
+                            }
                         });
             var arr = Encoding.UTF8.GetBytes(json);
 

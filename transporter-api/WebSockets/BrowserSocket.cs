@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.WebSockets;
@@ -12,6 +13,10 @@ namespace transporter_api.WebSockets
 {
     public static class BrowserSocket
     {
+        // key driverId
+        public static List<WebSocket> BrowserWebSockets
+            = new List<WebSocket>();
+
         public static async Task<bool> TryConnect(HttpContext context)
         {
             if (context.WebSockets.IsWebSocketRequest)
@@ -19,23 +24,16 @@ namespace transporter_api.WebSockets
                 WebSocket webSocket =
                     await context.WebSockets.AcceptWebSocketAsync();
 
+                BrowserWebSockets.Add(webSocket);
+
                 await Connect(context, webSocket);
                 return true;
             }
-            //var s = "driver_id is invalid";
-            //byte[] data = Encoding.UTF8.GetBytes(s);
-            //await context.Response.Body.WriteAsync(data, 0, data.Length);
             return false;
         }
 
         public static async Task Connect(HttpContext context, WebSocket webSocket)
         {
-            var tokenSource2 = new CancellationTokenSource();
-            CancellationToken ct = tokenSource2.Token;
-
-            var task = Task.Run(() => Run(webSocket), 
-                tokenSource2.Token);
-
             var buffer = new byte[1024 * 4];
             var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer),
                 CancellationToken.None);
@@ -46,22 +44,27 @@ namespace transporter_api.WebSockets
                     CancellationToken.None);
             }
 
-            tokenSource2.Cancel();
             await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, 
             "end", CancellationToken.None);
         }
 
-        public async static Task Run(WebSocket webSocket)
+        public async static Task SendToAllAsync(object obj)
         {
-            while (true)
+            await Task.Run(async () =>
             {
-                await webSocket.SendAsync(new MapSocketMessage
+                foreach (var ws in BrowserWebSockets)
                 {
-                    Payload = MobileSocket.Drivers.Values.ToArray()
-                });
-                Thread.Sleep(5000);
-                Console.WriteLine("Send drivers to browser");
-            }
+                    try
+                    {
+                        await ws.SendAsync(obj);
+                    }
+                    catch (WebSocketException ex)
+                    {
+                        Console.WriteLine("browser socket sending exception: " + ex.ToString());
+                        BrowserWebSockets.Remove(ws);
+                    }
+                }
+            });
         }
     }
 
