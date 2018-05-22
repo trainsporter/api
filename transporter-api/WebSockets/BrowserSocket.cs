@@ -7,6 +7,7 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using transporter_api.Controllers;
 using transporter_api.Extensions;
 
 namespace transporter_api.WebSockets
@@ -55,6 +56,10 @@ namespace transporter_api.WebSockets
 
             while (!result.CloseStatus.HasValue)
             {
+                await SendToAllAsync(new OrdersSocketMessage
+                {
+                    Payload = OrdersController.Orders
+                });
                 result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer),
                     CancellationToken.None);
             }
