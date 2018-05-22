@@ -179,8 +179,12 @@ namespace transporter_api.Controllers
 
         // DELETE api/orders/5
         [HttpDelete("{id}")]
-        public void Delete(int id)
+        public void Delete(string id)
         {
+            var order = Orders.SingleOrDefault(o => o.Id == id.ToString());
+            if (order == null) return;
+
+            Orders.Remove(order);
         }
     }
 
