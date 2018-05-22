@@ -26,10 +26,25 @@ namespace transporter_api.WebSockets
 
                 BrowserWebSockets.Add(webSocket);
 
-                await Connect(context, webSocket);
+
+                await WrapConnection(context, webSocket);
                 return true;
             }
             return false;
+        }
+
+        public static async Task WrapConnection(HttpContext context, WebSocket webSocket)
+        {
+            try
+            {
+                await Connect(context, webSocket);
+            }
+            catch (WebSocketException)
+            {
+                if (!BrowserWebSockets.Remove(webSocket))
+                    Console.WriteLine($"cant remove from sockets after ws exception");
+                throw;
+            }
         }
 
         public static async Task Connect(HttpContext context, WebSocket webSocket)

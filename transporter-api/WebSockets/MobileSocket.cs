@@ -115,21 +115,21 @@ namespace transporter_api.WebSockets
                     MobileWebSockets.AddOrUpdate(driverId, webSocket, 
                         (key, oldWs) => webSocket);
 
-                    await ConnectRec(context, webSocket, driverId);
+                    await WrapConnection(context, webSocket, driverId);
                     return true;
                 }
             }
             return false;
         }
 
-        public static async Task ConnectRec(HttpContext context, WebSocket webSocket,
+        public static async Task WrapConnection(HttpContext context, WebSocket webSocket,
             string driverId)
         {
             try
             {
                 await Connect(context, webSocket, driverId);
             }
-            catch (WebSocketException ex)
+            catch (WebSocketException)
             {
                 if (!Drivers.TryRemove(driverId, out var removedVehicleOnMap))
                     Console.WriteLine($"cant remove from drivers after ws exception");
