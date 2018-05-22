@@ -185,6 +185,10 @@ namespace transporter_api.Controllers
             if (order == null) return;
 
             Orders.Remove(order);
+            BrowserSocket.SendToAllAsync(new OrdersSocketMessage
+            {
+                Payload = Orders
+            });
         }
     }
 
