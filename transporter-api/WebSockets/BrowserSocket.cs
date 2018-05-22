@@ -68,6 +68,12 @@ namespace transporter_api.WebSockets
         }
     }
 
+    public class OrdersSocketMessage
+    {
+        public string Operation = SocketOperation.Browser.Orders;
+        public List<Order> Payload { get; set; }
+    }
+
     public class MapSocketMessage
     {
         public string Operation = SocketOperation.Browser.Map;

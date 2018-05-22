@@ -74,10 +74,16 @@ namespace transporter_api.Controllers
             };
             Orders.Add(newOrder);
 
-            await MobileSocket.SendToAllMobileSockets(new OrderAvailablePayload
+            BrowserSocket.SendToAllAsync(new OrdersSocketMessage
+            {
+                Payload = Orders
+            });
+
+            MobileSocket.SendToAllMobileSockets(new OrderAvailablePayload
             {
                 Payload = newOrder
             });
+
             return Ok(newOrder);
         }
 
@@ -85,29 +91,22 @@ namespace transporter_api.Controllers
         {
             using (var client = new HttpClient())
             {
-                try
-                {
-                    client.BaseAddress = new Uri("https://maps.googleapis.com");
-                    var response = await client
-                        .GetAsync($"/maps/api/geocode/json?address={address}&key={GeocodingApiKey}");
-                    response.EnsureSuccessStatusCode();
+                client.BaseAddress = new Uri("https://maps.googleapis.com");
+                var response = await client
+                    .GetAsync($"/maps/api/geocode/json?address={address}&key={GeocodingApiKey}");
+                response.EnsureSuccessStatusCode();
 
-                    var stringResult = await response.Content.ReadAsStringAsync();
-                    var position = JsonConvert.DeserializeObject<GeocodingModel>(stringResult);
+                var stringResult = await response.Content.ReadAsStringAsync();
+                var position = JsonConvert.DeserializeObject<GeocodingModel>(stringResult);
 
-                    var geoLocation = position.results.FirstOrDefault();
-                    return (geoLocation != null)
-                        ? new GeoPoint
-                        {
-                            Latitude = geoLocation.geometry.location.lat,
-                            Longitude = geoLocation.geometry.location.lng,
-                        }
-                        : null;
-                }
-                catch (HttpRequestException ex)
-                {
-                    throw;
-                }
+                var geoLocation = position.results.FirstOrDefault();
+                return (geoLocation != null)
+                    ? new GeoPoint
+                    {
+                        Latitude = geoLocation.geometry.location.lat,
+                        Longitude = geoLocation.geometry.location.lng,
+                    }
+                    : null;
             }
         }
 
@@ -169,6 +168,11 @@ namespace transporter_api.Controllers
             updOrder.Pickup = order.Pickup;
             updOrder.Dropoff = order.Dropoff;
             updOrder.Id = order.Id;
+
+            BrowserSocket.SendToAllAsync(new OrdersSocketMessage
+            {
+                Payload = Orders
+            });
 
             return Ok(updOrder);
         }

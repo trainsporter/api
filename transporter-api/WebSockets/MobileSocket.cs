@@ -26,6 +26,7 @@ namespace transporter_api.WebSockets
         public static class Browser
         {
             public const string Map = "map";
+            public const string Orders = "orders";
         }
     }
 
